@@ -119,9 +119,15 @@ function handleSubmit(event, container, options) {
   if (form.tagName.toUpperCase() !== 'FORM')
     throw "$.pjax.submit requires a form element"
 
+  var data = $form.serializeArray()
+
+  if (submitButton = $form.data(submitButtonAttr))
+    data.push(submitButton)
+
   var defaults = {
     type: ($form.attr('method') || 'GET').toUpperCase(),
     url: $form.attr('action'),
+    data: data,
     container: $form.attr('data-pjax'),
     target: form
   }
@@ -143,6 +149,28 @@ function handleSubmit(event, container, options) {
   pjax($.extend({}, defaults, options))
 
   event.preventDefault()
+}
+
+var submitClickSelectors = 'form[data-pjax] input[type=submit],\
+  form[data-pjax] button[type=submit],\
+  form[data-pjax] button:not([type])',
+  submitButtonAttr = 'pjax-submit-button-value'
+
+// Private: sends value of submitting element along form post
+//
+// event   - "click" jQuery.Event
+//
+// Returns nothing.
+function handleSubmitClick(event) {
+  var $submit = $(this),
+    $form = $submit.closest('form')
+
+  if (name = $submit.attr('name')) {
+    $form.data(submitButtonAttr, { name: name, value: $submit.val() })
+  }
+  else {
+    $form.data(submitButtonAttr, null)
+  }
 }
 
 // Loads a URL with ajax, puts the response body inside a container,
@@ -853,7 +881,10 @@ function enable() {
     maxCacheLength: 20,
     version: findVersion
   }
+
   $(window).on('popstate.pjax', onPjaxPopstate)
+
+  $(document).on('click', submitClickSelectors, handleSubmitClick)
 }
 
 // Disable pushState behavior.
@@ -877,6 +908,8 @@ function disable() {
   $.pjax.reload = function() { window.location.reload() }
 
   $(window).off('popstate.pjax', onPjaxPopstate)
+
+  $(document).off('click', submitClickSelectors, handleSubmitClick)
 }
 
 

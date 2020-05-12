@@ -35,7 +35,7 @@ end
 
 get '/' do
   jquery_version = params[:jquery] if params[:jquery]
-  erb :qunit
+  erb :qunit, :layout => false
 end
 
 get '/env.html' do
